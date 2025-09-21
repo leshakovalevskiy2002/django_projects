@@ -1,3 +1,6 @@
 *.sqlite3
 *.log
 */.env
+locale/*/LC_MESSAGES/*.mo
+django_htmx/books/locale/en/
+django_htmx/locale/en/
