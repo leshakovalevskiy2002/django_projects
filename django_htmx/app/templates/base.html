@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load cache %}
 {% load static %}
 <!DOCTYPE html>
 <html>
@@ -32,6 +33,7 @@
             <!-- Таблица книг -->
             <form class="form-inline">
             <table class="table table-bordered table-sm mt-5">
+                {% cache 600 table_header LANGUAGE_CODE %}
                 {% trans "id" as id %}{% trans "title" as title %}
                     {% trans "author" as author %}{% trans "price" as price %}
                     {% trans "read" as read %}{% trans "ascend" as ascend %}
@@ -138,6 +140,7 @@
                     </th>
                 </tr>
                 </thead>
+                {% endcache %}
                 <!-- Список книг -->
                 <tbody id="book-list">
                 {% include "partial_book_list.html" %}

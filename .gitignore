@@ -1,6 +1,10 @@
 *.sqlite3
 *.log
 */.env
+*/.env.prod
 locale/*/LC_MESSAGES/*.mo
-django_htmx/books/locale/en/
-django_htmx/locale/en/
+django_htmx/app/books/locale/en/
+django_htmx/app/locale/en/
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir

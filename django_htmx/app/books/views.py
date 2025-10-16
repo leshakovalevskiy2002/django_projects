@@ -7,11 +7,20 @@ from django.utils import translation
 from .models import Book
 from .forms import BookCreateForm, BookEditForm
 from django_htmx.settings import RUB_PER_USD
+from django.core.cache import cache
+
+
+def delete_cache_keys():
+    key_list = ['cached_book_list']
+    for col in ('pk', 'title', 'author', 'price', 'read'):
+        key_list.append('cached_book_list_sorted_' + col)
+        key_list.append('cached_book_list_sorted_-' + col)
+    cache.delete_many(key_list)
 
 
 @require_http_methods(['GET'])
 def book_list(request):
-    book_list = Book.objects.all()
+    book_list = cache.get_or_set("cached_book_list", Book.objects.all())
     form = BookCreateForm(auto_id=False)
     return render(request, 'base.html', {'book_list': book_list, "form": form})
 
@@ -25,6 +34,7 @@ def create_book(request):
         if cur_language == "en":
             book.price = int(book.price * RUB_PER_USD)
         book.save()
+        delete_cache_keys()
         return render(request, 'partial_book_detail.html', {'book': book})
     return render(request, 'partial_create_book_form.html', {'form': form}, status=422)
 
@@ -39,6 +49,7 @@ def update_book_details(request, pk):
             if cur_language == "en":
                 book.price = int(book.price * RUB_PER_USD)
             book.save()
+            delete_cache_keys()
             return render(request, 'partial_book_detail.html', {'book': book})
         else:
             status = 422
@@ -62,6 +73,7 @@ def book_detail(request, pk):
 def delete_book(request, pk):
     book = get_object_or_404(Book, pk=pk)
     book.delete()
+    delete_cache_keys()
     return HttpResponse()
 
 
@@ -70,6 +82,7 @@ def update_book_status(request, pk):
     book = get_object_or_404(Book, pk=pk)
     book.read = not book.read
     book.save()
+    delete_cache_keys()
     return render(request, 'partial_book_detail.html', {'book': book})
 
 
@@ -82,10 +95,9 @@ def book_list_sort(request, filter, direction):
                    _('read'): 'read'}
 
     if filter in filter_dict:
-        if direction == _('ascend'):
-            book_list = Book.objects.order_by(filter_dict[filter])
-        else:
-            book_list = Book.objects.order_by('-' + filter_dict[filter])
+        sort_str = ('-', '')[direction == _('ascend')] + filter_dict[filter]
+        cache_key = 'cached_book_list_sorted_' + sort_str
+        book_list = cache.get_or_set(cache_key, Book.objects.order_by(sort_str))
     else:
         book_list = Book.objects.all()
 
